@@ -1,7 +1,25 @@
+import ClassRepositoryMemory from "./ClassRepositoryMemory";
+import EnrollmentRepositoryMemory from "./EnrollmentRepositoryMemory";
 import EnrollStudent from "./EnrollStudent";
+import LevelRepositoryMemory from "./LevelRepositoryMemory";
+import ModuleRepositoryMemory from "./ModuleRepositoryMemory";
+
+let enrollStudent: EnrollStudent;
+
+beforeEach(function () {
+  const enrollmentRepository = new EnrollmentRepositoryMemory();
+  const levelRepository = new LevelRepositoryMemory();
+  const moduleRepository = new ModuleRepositoryMemory();
+  const classRepository = new ClassRepositoryMemory();
+  enrollStudent = new EnrollStudent(
+    levelRepository,
+    moduleRepository,
+    classRepository,
+    enrollmentRepository
+  );
+});
 
 test("Should not enroll without valid student name", () => {
-  const enrollStudent = new EnrollStudent();
   const enrollmentRequest = {
     student: {
       name: "Ana",
@@ -16,7 +34,6 @@ test("Should not enroll without valid student name", () => {
 });
 
 test("Should not enroll without valid student cpf", () => {
-  const enrollStudent = new EnrollStudent();
   const enrollmentRequest = {
     student: {
       name: "Ana Silva",
@@ -32,11 +49,10 @@ test("Should not enroll without valid student cpf", () => {
 });
 
 test("Should not enroll duplicated student", () => {
-  const enrollStudent = new EnrollStudent();
   const enrollmentRequest = {
     student: {
       name: "Ana Silva",
-      cpf: "832.081.519-34", // gerado em geradorcpf.com
+      cpf: "832.081.519-34",
     },
     level: "EM",
     module: "1",
@@ -49,7 +65,6 @@ test("Should not enroll duplicated student", () => {
 });
 
 test("Should generate enrollment code", function () {
-  const enrollStudent = new EnrollStudent();
   const enrollmentRequest = {
     student: {
       name: "Ana Silva",
@@ -64,7 +79,6 @@ test("Should generate enrollment code", function () {
 });
 
 test("Should not enroll student below minimum age", function () {
-  const enrollStudent = new EnrollStudent();
   const enrollmentRequest = {
     student: {
       name: "Ana Silva",
@@ -81,7 +95,6 @@ test("Should not enroll student below minimum age", function () {
 });
 
 test("Should not enroll student over class capacity", function () {
-  const enrollStudent = new EnrollStudent();
   enrollStudent.execute({
     student: {
       name: "Ana Silva",
