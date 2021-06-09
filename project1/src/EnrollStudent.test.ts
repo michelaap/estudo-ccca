@@ -1,4 +1,4 @@
-import ClassRepositoryMemory from "./ClassRepositoryMemory";
+import ClassroomRepositoryMemory from "./ClassroomRepositoryMemory";
 import EnrollmentRepositoryMemory from "./EnrollmentRepositoryMemory";
 import EnrollStudent from "./EnrollStudent";
 import LevelRepositoryMemory from "./LevelRepositoryMemory";
@@ -10,11 +10,11 @@ beforeEach(function () {
   const enrollmentRepository = new EnrollmentRepositoryMemory();
   const levelRepository = new LevelRepositoryMemory();
   const moduleRepository = new ModuleRepositoryMemory();
-  const classRepository = new ClassRepositoryMemory();
+  const classroomRepository = new ClassroomRepositoryMemory();
   enrollStudent = new EnrollStudent(
     levelRepository,
     moduleRepository,
-    classRepository,
+    classroomRepository,
     enrollmentRepository
   );
 });
@@ -26,7 +26,7 @@ test("Should not enroll without valid student name", () => {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
     new Error("Invalid name")
@@ -41,7 +41,7 @@ test("Should not enroll without valid student cpf", () => {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
     new Error("Invalid cpf")
@@ -56,7 +56,7 @@ test("Should not enroll duplicated student", () => {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   enrollStudent.execute(enrollmentRequest);
   expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
@@ -72,10 +72,10 @@ test("Should generate enrollment code", function () {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   const enrollment = enrollStudent.execute(enrollmentRequest);
-  expect(enrollment.code).toBe("2021EM1A0001");
+  expect(enrollment.code.value).toBe("2021EM1A0001");
 });
 
 test("Should not enroll student below minimum age", function () {
@@ -87,7 +87,7 @@ test("Should not enroll student below minimum age", function () {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
     new Error("Student below minimum age")
@@ -102,7 +102,7 @@ test("Should not enroll student over class capacity", function () {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   });
   enrollStudent.execute({
     student: {
@@ -111,7 +111,7 @@ test("Should not enroll student over class capacity", function () {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   });
   const enrollmentRequest = {
     student: {
@@ -120,9 +120,57 @@ test("Should not enroll student over class capacity", function () {
     },
     level: "EM",
     module: "1",
-    class: "A",
+    classroom: "A",
   };
   expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
     "Class is over capacity"
   );
+});
+
+test("Should not enroll after end of the classroom", function () {
+  const enrollmentRequest = {
+    student: {
+      name: "Maria Carolina Fonseca",
+      cpf: "755.525.774-26",
+      birthDate: "2002-03-12",
+    },
+    level: "EM",
+    module: "1",
+    classroom: "B",
+  };
+  expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
+    new Error("Class is already finished")
+  );
+});
+
+test("Should not enroll after 25% of the start of the class", function () {
+  const enrollmentRequest = {
+    student: {
+      name: "Maria Carolina Fonseca",
+      cpf: "755.525.774-26",
+      birthDate: "2002-03-12",
+    },
+    level: "EM",
+    module: "1",
+    classroom: "C",
+  };
+  expect(() => enrollStudent.execute(enrollmentRequest)).toThrow(
+    new Error("Class is already started")
+  );
+});
+
+test("Should generate the invoices based on the number of installments, rounding each amount and applying the rest in the last invoice", function () {
+  const enrollmentRequest = {
+    student: {
+      name: "Maria Carolina Fonseca",
+      cpf: "755.525.774-26",
+      birthDate: "2002-03-12",
+    },
+    level: "EM",
+    module: "1",
+    classroom: "A",
+    installments: 12,
+  };
+  const enrollment = enrollStudent.execute(enrollmentRequest);
+  expect(enrollment.invoices).toHaveLength(12);
 });

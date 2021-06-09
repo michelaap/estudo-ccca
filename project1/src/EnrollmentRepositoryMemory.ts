@@ -14,12 +14,12 @@ export default class EnrollmentRepositoryMemory
     this.enrollments.push(enrollment);
   }
 
-  findAllByClass(level: string, module: string, clazz: string) {
+  findAllByClassroom(level: string, module: string, classroom: string) {
     return this.enrollments.filter(
       (enrollment) =>
-        enrollment.clazz === clazz &&
-        enrollment.level === level &&
-        enrollment.module === module
+        enrollment.classroom.code === classroom &&
+        enrollment.level.code === level &&
+        enrollment.module.code === module
     );
   }
 

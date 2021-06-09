@@ -1,4 +1,4 @@
-import ClassRepository from "./ClassRepository";
+import ClassroomRepository from "./ClassroomRepository";
 import Enrollment from "./Enrollment";
 import EnrollmentRepository from "./EnrollmentRepository";
 import LevelRepository from "./LevelRepository";
@@ -9,17 +9,17 @@ export default class EnrollStudent {
   enrollmentRepository: EnrollmentRepository;
   levelRepository: LevelRepository;
   moduleRepository: ModuleRepository;
-  classRepository: ClassRepository;
+  classroomRepository: ClassroomRepository;
 
   constructor(
     levelRepository: LevelRepository,
     moduleRepository: ModuleRepository,
-    classRepository: ClassRepository,
+    classroomRepository: ClassroomRepository,
     enrollmentRepository: EnrollmentRepository
   ) {
     this.levelRepository = levelRepository;
     this.moduleRepository = moduleRepository;
-    this.classRepository = classRepository;
+    this.classroomRepository = classroomRepository;
     this.enrollmentRepository = enrollmentRepository;
   }
 
@@ -31,34 +31,31 @@ export default class EnrollStudent {
       enrollmentRequest.level,
       enrollmentRequest.module
     );
-    const clazz = this.classRepository.findByCode(enrollmentRequest.class);
-    if (student.getAge() < module.minimumAge) {
-      throw new Error("Student below minimum age");
-    }
-    const studentsEnrolledInClass = this.enrollmentRepository.findAllByClass(
-      level.code,
-      module.code,
-      clazz.code
+    const classroom = this.classroomRepository.findByCode(
+      enrollmentRequest.classroom
     );
-    if (studentsEnrolledInClass.length === clazz.capacity) {
+    const studentsEnrolledInClass =
+      this.enrollmentRepository.findAllByClassroom(
+        level.code,
+        module.code,
+        classroom.code
+      );
+    if (studentsEnrolledInClass.length === classroom.capacity)
       throw new Error("Class is over capacity");
-    }
     const existingEnrollment = this.enrollmentRepository.findByCpf(student.cpf);
-    if (existingEnrollment) {
+    if (existingEnrollment)
       throw new Error("Enrollment with duplicated student is not allowed");
-    }
-    const sequence = new String(this.enrollmentRepository.count() + 1).padStart(
-      4,
-      "0"
-    );
-    const year = new Date().getFullYear();
-    const code = `${year}${level.code}${module.code}${clazz.code}${sequence}`;
+    const enrollmentSequence = this.enrollmentRepository.count() + 1;
+    const issueDate = new Date();
+    const { installments } = enrollmentRequest;
     const enrollment = new Enrollment(
       student,
-      level.code,
-      module.code,
-      clazz.code,
-      code
+      level,
+      module,
+      classroom,
+      issueDate,
+      enrollmentSequence,
+      installments
     );
     this.enrollmentRepository.save(enrollment);
     return enrollment;
